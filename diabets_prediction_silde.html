@@ -1,0 +1,478 @@
+<!DOCTYPE html><html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>혈당 수치에 따른 당뇨병 환자 예측</title>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        :root {
+            --primary-color: #005A9C;
+            --secondary-color: #0078D4;
+            --text-color: #333;
+            --bg-color: #f4f4f9;
+            --slide-bg: #fff;
+            --header-font-color: #fff;
+        }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 2rem 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            font-size: 16px;
+        }
+        .slide {
+            background-color: var(--slide-bg);
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+            width: 90%;
+            max-width: 1024px;
+            min-height: 576px;
+            padding: 3rem 4rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        .slide-title, .slide-end {
+            text-align: center;
+            justify-content: center;
+        }
+        .slide-title h1 {
+            font-size: 3.2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        .slide-title p {
+            font-size: 1.5rem;
+            color: #555;
+        }
+        .slide-end h1 {
+            font-size: 4rem;
+            color: var(--primary-color);
+        }
+        .slide-header {
+            background-color: var(--primary-color);
+            color: var(--header-font-color);
+            padding: 1rem 4rem;
+            margin: -3rem -4rem 2rem -4rem;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        h2 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            border-bottom: 3px solid var(--secondary-color);
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+        }
+        h3 {
+            color: var(--secondary-color);
+            font-size: 1.4rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        li {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin-bottom: 0.75rem;
+            padding-left: 1.5em;
+            position: relative;
+        }
+        li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+        p {
+            font-size: 1.1rem;
+            line-height: 1.7;
+        }
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            width: 100%;
+        }
+        .grid-item {
+            padding: 1.5rem;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            border-left: 5px solid var(--secondary-color);
+        }
+        .grid-item h3 {
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            font-size: 1rem;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 0.8rem 1rem;
+            text-align: left;
+            vertical-align: middle;
+        }
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f8f8;
+        }
+        .image-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .image-container figure {
+            flex: 1;
+            margin: 0;
+            text-align: center;
+        }
+        .image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        figcaption {
+            margin-top: 0.8rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .equation {
+            background-color: #eef7ff;
+            border: 1px solid #bde0ff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 500;
+            margin: 2rem 0;
+        }
+        .flex-container {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+        .flex-item {
+            flex: 1;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem 0;
+                gap: 1rem;
+            }
+            .slide {
+                width: 100%;
+                min-height: auto;
+                padding: 2rem 1.5rem;
+                border-radius: 0;
+                border-left: 0;
+                border-right: 0;
+            }
+            .slide-header {
+                padding: 1rem 1.5rem;
+                margin: -2rem -1.5rem 1.5rem -1.5rem;
+                font-size: 1.5rem;
+            }
+            .slide-title h1 { font-size: 2.2rem; }
+            .slide-title p { font-size: 1.2rem; }
+            h2 { font-size: 1.5rem; }
+            h3 { font-size: 1.2rem; }
+            li, p { font-size: 1rem; }
+            .flex-container, .image-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body class="">
+<section class="slide slide-title">
+<h1>혈당 수치에 따른 당뇨병 환자 예측</h1>
+<p data-sk-edited="" style="font-weight: bold;">단순 선형회귀를 활용한 혈당 수치와 당뇨병간의 관계분석</p>
+</section>
+<section class="slide">
+<div class="slide-header">1. 프로젝트 개요</div>
+<h2>프로젝트 주제, 배경 및 기획의도</h2>
+<div class="content-grid">
+<div class="grid-item">
+<h3>프로젝트 주제</h3>
+<p data-sk-edited="">Glucose(혈당 수치)에 따른 Outcome(당뇨 여부) 예측을 위한 </p><p data-sk-edited="">머신러닝 회귀 모델 개발</p>
+</div>
+<div class="grid-item">
+<h3>선정 배경</h3>
+<ul>
+<li data-sk-edited=""><b>문제점:</b> 당뇨병은 조기 진단이 중요하지만, 초기 증상이 없어 진단이 늦어지는 <br/>경우가 많습니다.</li>
+<li data-sk-edited=""><b>필요성:</b> 혈당 수치만으로 당뇨병 위험을 예측할 수 있는 간단한 모델이 <br/>필요합니다.</li>
+</ul>
+</div>
+<div class="grid-item">
+<h3>기획 의도</h3>
+<ul>
+<li>단순 선형회귀를 통해 혈당과 당뇨병 발병 위험의 직관적 관계를 분석합니다.</li>
+<li>사용자가 쉽게 위험도를 확인할 수 있는 웹 애플리케이션 개발을 목표로 합니다.</li>
+</ul>
+</div>
+</div>
+</section>
+<section class="slide">
+<div class="slide-header">1. 프로젝트 개요</div>
+<h2>프로젝트 내용 및 기술 스택</h2>
+<div class="flex-container">
+<div class="flex-item">
+<h3>프로젝트 내용</h3>
+<ul>
+<li data-sk-edited="">CSV 데이터 활용<br/>-  Glucose(혈당 수치), Outcome(당뇨 진단)</li>
+<li data-sk-edited="">사이킷런(Scikit-learn) 선형 회귀 모델로 학습</li>
+<li data-sk-edited="">맷플롯(Matplotlib)을 이용한 모델 시각화</li>
+<li data-sk-edited="">스트림릿(Streamlit) 웹 앱으로 사용자의 데이터(혈당)에 따른 <br/>실시간 당뇨 여부 예측 제공</li>
+</ul>
+</div>
+<div class="flex-item">
+<h3 data-sk-edited="">기술 스택</h3>
+<ul>
+<li data-sk-edited=""><b data-sk-edited="">장비:</b> PC 또는 NoteBook</li><li data-sk-edited=""><b>언어/환경:</b> Python</li>
+<li data-sk-edited=""><b>라이브러리:</b> Pandas, NumPy, Scikit-learn, Matplotlib, Streamlit, Platform, JupyterLab</li>
+<li><b>데이터 소스:</b> <a data-sk-edited="" href="https://github.com/zinny24/yj2/blob/main/diabetes.csv" target="_blank">GitHub(https://github.com/zinny24/yj2/) diabetes.csv</a></li>
+</ul>
+</div>
+</div>
+</section>
+<section class="slide">
+<div class="slide-header">1. 프로젝트 개요</div>
+<h2>프로젝트 구조 및 일정</h2>
+<table class="">
+<thead>
+<tr>
+<th>단계 (순서)</th>
+<th>기간</th>
+<th>주요 내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>데이터 준비</td>
+<td>1주차</td>
+<td data-sk-edited="">데이터 수집(diabetes.csv) 및 초기 탐색, <br/>품질 분석, 데이터 전처리</td>
+</tr>
+<tr>
+<td>모델 개발</td>
+<td>2주차</td>
+<td data-sk-edited="">특성 선택, 선형회귀 모델 구현 및 학습</td>
+</tr>
+<tr>
+<td>웹 앱 구현</td>
+<td>3주차</td>
+<td>Streamlit UI 개발 및 모델 연동, 결과 시각화</td>
+</tr>
+<tr>
+<td>테스트 및 개선</td>
+<td>4~5주차</td>
+<td>모델 성능 평가, 사용자 피드백 기반 UI 개선</td>
+</tr>
+<tr>
+<td>발표 및 문서화</td>
+<td>6주차</td>
+<td>최종 발표 자료 작성 및 프로젝트 정리, 리허설</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section class="slide">
+<div class="slide-header">1. 프로젝트 개요</div>
+<h2>활용 방안 및 기대 효과</h2>
+<div class="content-grid">
+<div class="grid-item">
+<h3>개인 맞춤형 예측 도구</h3>
+<p>개인이 자신의 혈당 수치를 입력하여 당뇨병 발병 위험도를 쉽게 확인하고, 건강 관리 계획 수립에 참고 자료로 활용합니다.</p>
+</div>
+<div class="grid-item">
+<h3>의료 접근성 향상</h3>
+<p>복잡한 검사 없이 잠재적 위험을 조기 파악하여, 전문 의료기관 방문 시기를 결정하는 데 도움을 제공합니다.</p>
+</div>
+</div>
+</section>
+<section class="slide">
+<div class="slide-header">2. 프로젝트 팀 구성 및 역할</div>
+<h2>팀 구성 및 역할 분담</h2>
+<table class="">
+<thead>
+<tr>
+<th>팀원</th>
+<th>역할 및 담당 업무</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>이재혁 (팀장)</strong></td>
+<td>프로젝트 총괄, 일정 관리, 머신러닝 모델 설계 및 학습</td>
+</tr>
+<tr>
+<td><strong>박아진 (팀원)</strong></td>
+<td data-sk-edited="">데이터 수집 및 전처리, EDA(데이터 탐색), 발표 자료 제작</td>
+</tr>
+<tr>
+<td><strong>전진원 (팀원)</strong></td>
+<td>Streamlit 웹 앱 개발 및 인터랙티브 시각화</td>
+</tr>
+<tr>
+<td><strong>팀원 전체</strong></td>
+<td>각자 담당 파트 발표 준비 및 상호 피드백</td>
+</tr>
+</tbody>
+</table>
+<p style="margin-top: 1.5rem;"><strong>* 협업 방식:</strong> 주간 정기 미팅, GitHub를 활용한 코드 버전 관리 및 협업</p>
+</section>
+<section class="slide">
+<div class="slide-header">3. 프로젝트 수행 절차</div>
+<h2>데이터 준비: 품질 문제 발견 및 해결</h2>
+<p data-sk-edited="">데이터셋 분석 결과, Glucose(혈당), BloodPressure(혈압) 등 주요 의료 지표에서 의학적으로 불가능한 &#39;0&#39; 값이 발견되었습니다. 이는 결측치로 판단하여 각 변수의 <strong>중앙값(Median)</strong>으로 대체하여 데이터셋을 정제하였습니다.<br/>또한, 이상치 제거하여 머신러닝 데이터 학습 시 불필요 한 데이터를 제거하였습니다.</p>
+<div class="image-container" style="flex-direction: column; align-items: center; gap: 2rem;">
+<div class="image-container" style="gap: 1.5rem; width: 100%;">
+<figure style="flex: 1;"><img alt="0값 전처리 전 혈당 분포 그래프" src="https://static-us-img.skywork.ai/prod/analysis/2025-09-25/7901319012803687846/1971054308729393153_b278da3837ce5920955b08902d239649.webp"/>
+<figcaption>값 전처리 전 Glucose 분포 (0 포함)</figcaption>
+</figure>
+<figure style="flex: 1;"><img alt="0값 전처리 후 혈당 분포 그래프" src="https://static-us-img.skywork.ai/prod/user/head_picture/1971082932431261696_0%EA%B0%92%20%EC%A0%84%EC%B2%98%EB%A6%AC%20%ED%9B%84%20%EA%B7%B8%EB%9E%98%ED%94%84.webp?image_process=quality,q_90/resize,w_1280/format,webp"/>
+<figcaption>값 전처리 후 Glucose 분포 (중앙값으로 대체)</figcaption>
+</figure>
+</div>
+<figure style="max-width: 60%;"><img alt="이상치 확인 그래프" src="https://static-us-img.skywork.ai/prod/analysis/2025-09-25/7901319012803687846/1971054308729393152_671004ffc88892e34e8493023491c993.webp"/>
+<figcaption>Glucose 이상치 분포</figcaption>
+</figure>
+</div>
+</section>
+<section class="slide">
+<div class="slide-header">3. 프로젝트 수행 절차</div>
+<h2>모델 개발 및 학습</h2>
+<h3>모델 선택: 단순 선형 회귀 (Linear Regression)</h3>
+<ul>
+<li><b>선택 이유:</b> 변수 간의 관계를 직관적으로 해석하기 용이하고, 과적합 위험이 낮으며, 결과 설명이 명확합니다.</li>
+<li><b>독립 변수 (X):</b> Glucose (혈당 수치)</li>
+<li><b>종속 변수 (Y):</b> Outcome (당뇨병 진단 여부)</li>
+</ul>
+<h3>학습된 회귀 방정식</h3>
+<div class="equation">
+<p><strong>당뇨병 발병 확률 = -0.6422 + 0.0081 × (혈당 수치)</strong></p>
+</div>
+<p><strong>해석:</strong> 혈당 수치가 1mg/dL 증가할 때마다 당뇨병 발병 확률이 약 0.81% 증가하는 경향을 보입니다. 이는 혈당이 높을수록 당뇨병 위험이 커진다는 의학적 상식과 일치합니다.</p>
+</section>
+<section class="slide">
+<div class="slide-header">4. 프로젝트 수행 경과</div>
+<h2>모델 성능 평가</h2>
+<div class="flex-container">
+<div class="flex-item">
+<h3>핵심 성능 지표</h3>
+<ul>
+<li><strong>정확도 (Accuracy):</strong> 70.8%</li>
+<li><strong>정밀도 (Precision):</strong> 61.5%</li>
+<li><strong>재현율 (Recall):</strong> 44.4%</li>
+<li><strong>R² Score (결정계수):</strong> 16.1%</li>
+</ul>
+<p>R² 값은 혈당 수치 하나만으로 당뇨 발병 여부 변동성의 약 16.1%를 설명할 수 있음을 의미합니다.</p>
+</div>
+<div class="flex-item">
+<h3>혼동 행렬 (Confusion Matrix)</h3>
+<table class="">
+<thead>
+<tr>
+<th>실제 \ 예측</th>
+<th>정상 예측</th>
+<th>당뇨 예측</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>실제 정상</strong></td>
+<td style="background-color: #d4edda;">85 (TN)</td>
+<td style="background-color: #f8d7da;">15 (FP)</td>
+</tr>
+<tr>
+<td><strong>실제 당뇨</strong></td>
+<td style="background-color: #f8d7da;">30 (FN)</td>
+<td style="background-color: #d4edda;">24 (TP)</td>
+</tr>
+</tbody>
+</table>
+<p>총 154개 테스트 데이터 중 109개(85+24)를 정확히 예측했습니다.</p>
+</div>
+</div>
+</section>
+<section class="slide">
+<div class="slide-header">4. 프로젝트 수행 경과</div>
+<h2>Streamlit 웹 애플리케이션 구현</h2>
+<h3>주요 기능 및 데모</h3>
+<ul>
+<li><b>사용자 인터페이스:</b> 슬라이더를 이용해 자신의 혈당 수치를 직관적으로 입력합니다.</li>
+<li><b>실시간 예측:</b> 입력된 혈당 수치에 따라 학습된 모델이 당뇨병 발병 위험도를 실시간으로 계산하여 표시합니다.</li>
+<li><b>결과 시각화:</b> 예측 결과와 함께 현재 입력값이 전체 데이터 분포에서 어느 위치에 있는지 시각적으로 보여줍니다.</li>
+<li><b>모델 신뢰도:</b> 실제 데이터와 모델의 예측 추세선을 함께 시각화하여 모델의 신뢰도를 간접적으로 제시합니다.</li>
+</ul>
+</section>
+<section class="slide">
+<div class="slide-header">5. 자체 평가</div>
+<h2>프로젝트 성과: 잘한 점</h2>
+<div class="content-grid">
+<div class="grid-item">
+<h3>직관적인 모델</h3>
+<p data-sk-edited="">단순 선형회귀를 사용하여 결과가 명확하고 이해하기 쉬운 모델을 구축했습니다.</p>
+</div>
+<div class="grid-item">
+<h3>빠른 프로토타이핑</h3>
+<p>Streamlit을 활용해 빠른 시간 내에 사용자 친화적인 웹 앱 UI를 개발했습니다.</p>
+</div>
+<div class="grid-item">
+<h3>체계적 접근</h3>
+<p data-sk-edited="">데이터 전처리부터 모델링, 평가까지 머신러닝 전체 파이프라인을 경험했습니다.</p>
+</div>
+</div>
+</section>
+<section class="slide">
+<div class="slide-header">5. 자체 평가</div>
+<h2>개선점 및 향후 계획</h2>
+<div class="flex-container">
+<div class="flex-item">
+<h3>개선점</h3>
+<ul>
+<li><strong>모델 성능:</strong> 재현율(44.4%)이 낮아 실제 당뇨 환자를 놓칠 가능성이 있습니다.</li>
+<li><strong>입력값 검증:</strong> 비정상적인 혈당 값 입력에 대한 유효성 검사 및 예외 처리가 필요합니다.</li>
+<li><strong>단순한 변수:</strong> 혈당 외 다른 변수(나이, BMI 등)를 고려하지 않아 예측력에 한계가 있습니다.</li>
+</ul>
+</div>
+<div class="flex-item">
+<h3>향후 계획</h3>
+<ul>
+<li data-sk-edited=""><strong>다중 회귀 모델:</strong> 혈압, 체중, 나이 등 추가 변수를 활용하여 예측 정확도를 향상시킬 것입<br/>니다.</li>
+<li data-sk-edited=""><strong>웹 앱 기능 확장:</strong> 예측 결과 저장, 의료진과의 정보 공유 등의 부가 기능을 추가할 계획입니다.</li>
+<li><strong>고급 모델 도입:</strong> Random Forest, XGBoost 등 다른 모델 도입을 검토할 것입니다.</li>
+</ul>
+</div>
+</div>
+</section>
+<section class="slide slide-end">
+<h1>Q &amp; A</h1>
+</section>
+<section class="slide slide-end">
+<h1>감사합니다.</h1>
+</section>
+</body></html>
